@@ -29,6 +29,7 @@ pub struct LdtkProject {
     level_map: HashMap<String, Handle<LdtkLevel>>,
     /// Image used for rendering int grid colors.
     int_grid_image_handle: Option<Handle<Image>>,
+    external_level_count: usize,
 }
 
 impl RawLevelAccessor for LdtkProject {
@@ -52,6 +53,10 @@ impl LdtkProject {
             .find(|(i, l)| level_selection.is_match(i, l))
             .map(|(_, l)| l)
     }
+
+    pub fn get_level_count(&self) -> usize{
+        self.external_level_count
+    }
 }
 
 #[derive(Default)]
@@ -66,6 +71,7 @@ impl AssetLoader for LdtkProjectLoader {
         Box::pin(async move {
             let data: LdtkJson = serde_json::from_slice(bytes)?;
 
+            let mut external_level_count = 0;
             let mut external_level_paths = Vec::new();
             let mut level_map = HashMap::new();
             let mut background_images = Vec::new();
@@ -76,6 +82,7 @@ impl AssetLoader for LdtkProjectLoader {
                             ldtk_path_to_asset_path(load_context.path(), external_rel_path);
 
                         external_level_paths.push(asset_path.clone());
+                        external_level_count += 1;
                         level_map.insert(level.iid.clone(), load_context.get_handle(asset_path));
                     }
                 }
@@ -123,6 +130,7 @@ impl AssetLoader for LdtkProjectLoader {
                 tileset_map,
                 level_map,
                 int_grid_image_handle,
+                external_level_count,
             };
             load_context.set_default_asset(
                 LoadedAsset::new(ldtk_asset)
@@ -170,6 +178,7 @@ mod tests {
             tileset_map: HashMap::default(),
             level_map: HashMap::default(),
             int_grid_image_handle: None,
+            external_level_count: 0,
         };
 
         assert_eq!(project.root_levels(), data.root_levels());

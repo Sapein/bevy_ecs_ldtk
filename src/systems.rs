@@ -12,7 +12,7 @@ use crate::{
     utils::*,
 };
 
-use bevy::{ecs::system::SystemState, prelude::*};
+use bevy::{asset::HandleId, ecs::system::SystemState, prelude::*};
 use std::collections::{HashMap, HashSet};
 
 /// Detects [LdtkProject] events and spawns levels as children of the [LdtkWorldBundle].
@@ -238,7 +238,6 @@ pub fn process_ldtk_levels(
             Option<&Respawn>,
             Option<&Children>,
         ),
-        Or<(Added<Handle<LdtkLevel>>, With<Respawn>)>,
     >,
     worldly_query: Query<&Worldly>,
     mut level_events: EventWriter<LevelEvent>,
@@ -259,49 +258,61 @@ pub fn process_ldtk_levels(
         if !already_processed {
             if let Ok(ldtk_handle) = ldtk_query.get(parent.get()) {
                 if let Some(ldtk_asset) = ldtk_assets.get(ldtk_handle) {
-                    // Commence the spawning
-                    let tileset_definition_map: HashMap<i32, &TilesetDefinition> = ldtk_asset
-                        .data()
-                        .defs
-                        .tilesets
-                        .iter()
-                        .map(|t| (t.uid, t))
-                        .collect();
+                    let fully_loaded = level_assets.ids().count() >= ldtk_asset.get_level_count();
+                    if fully_loaded {
+                        // Commence the spawning
+                        let tileset_definition_map: HashMap<i32, &TilesetDefinition> = ldtk_asset
+                            .data()
+                            .defs
+                            .tilesets
+                            .iter()
+                            .map(|t| (t.uid, t))
+                            .collect();
 
-                    let entity_definition_map =
-                        create_entity_definition_map(&ldtk_asset.data().defs.entities);
+                        let entity_definition_map =
+                            create_entity_definition_map(&ldtk_asset.data().defs.entities);
 
-                    let layer_definition_map =
-                        create_layer_definition_map(&ldtk_asset.data().defs.layers);
+                        let layer_definition_map =
+                            create_layer_definition_map(&ldtk_asset.data().defs.layers);
 
-                    let int_grid_image_handle = &ldtk_asset.int_grid_image_handle();
+                        let int_grid_image_handle = &ldtk_asset.int_grid_image_handle();
 
-                    let worldly_set = worldly_query.iter().cloned().collect();
+                        let worldly_set = worldly_query.iter().cloned().collect();
 
-                    if let Some(level) = level_assets.get(level_handle) {
-                        spawn_level(
-                            level,
-                            &mut commands,
-                            &asset_server,
-                            &images,
-                            &mut texture_atlases,
-                            &ldtk_entity_map,
-                            &ldtk_int_cell_map,
-                            &entity_definition_map,
-                            &layer_definition_map,
-                            ldtk_asset.tileset_map(),
-                            &tileset_definition_map,
-                            int_grid_image_handle,
-                            worldly_set,
-                            ldtk_entity,
-                            &ldtk_settings,
-                        );
-                        level_events
-                            .send(LevelEvent::Spawned(LevelIid::new(level.data().iid.clone())));
-                    }
+                        if let Some(level) = level_assets.get(level_handle) {
+                            spawn_level(
+                                level,
+                                &mut commands,
+                                &asset_server,
+                                &images,
+                                &mut texture_atlases,
+                                &ldtk_entity_map,
+                                &ldtk_int_cell_map,
+                                &entity_definition_map,
+                                &layer_definition_map,
+                                ldtk_asset.tileset_map(),
+                                &tileset_definition_map,
+                                int_grid_image_handle,
+                                worldly_set,
+                                ldtk_entity,
+                                &ldtk_settings,
+                            );
 
-                    if respawn.is_some() {
-                        commands.entity(ldtk_entity).remove::<Respawn>();
+                            let x: &Assets<LdtkLevel> = &level_assets;
+                            let xx: Vec<HandleId> = x.ids().collect();
+
+                            level_events
+                                .send(LevelEvent::Spawned(LevelIid::new(level.data().iid.clone())));
+                        } else {
+                            let x: &Assets<LdtkLevel> = &level_assets;
+                            let xx: Vec<HandleId> = x.ids().collect();
+                        }
+
+                        if respawn.is_some() {
+                            commands.entity(ldtk_entity).remove::<Respawn>();
+                        }
+                    }else{
+                        println!("NOT FULLY LOADED YET!");
                     }
                 }
             }
