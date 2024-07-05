@@ -164,7 +164,7 @@ mod tests {
             .register_default_ldtk_entity_for_layer::<LdtkEntityBundle>("default_entity_for_layer")
             .register_default_ldtk_entity::<LdtkEntityBundle>();
 
-        let ldtk_entity_map = app.world_mut().get_non_send_resource::<LdtkEntityMap>().unwrap();
+        let ldtk_entity_map = app.world().get_non_send_resource::<LdtkEntityMap>().unwrap();
 
         assert!(ldtk_entity_map.contains_key(&(
             Some("layer".to_string()),

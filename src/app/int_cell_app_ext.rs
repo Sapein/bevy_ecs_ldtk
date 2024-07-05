@@ -156,7 +156,7 @@ mod tests {
             )
             .register_default_ldtk_int_cell::<LdtkIntCellBundle>();
 
-        let ldtk_int_cell_map = app.world_mut().get_non_send_resource::<LdtkIntCellMap>().unwrap();
+        let ldtk_int_cell_map = app.world().get_non_send_resource::<LdtkIntCellMap>().unwrap();
 
         assert!(ldtk_int_cell_map.contains_key(&(Some("layer".to_string()), Some(1))));
 
