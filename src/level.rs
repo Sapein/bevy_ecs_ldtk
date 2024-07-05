@@ -52,7 +52,7 @@ fn background_image_sprite_sheet_bundle(
             background_image.texture_descriptor.size.width as f32,
             background_image.texture_descriptor.size.height as f32,
         );
-        let mut texture_atlas_layout = TextureAtlasLayout::new_empty(tile_size);
+        let mut texture_atlas_layout = TextureAtlasLayout::new_empty(tile_size.as_uvec2());
 
         let min = Vec2::new(
             background_position.crop_rect[0],
@@ -68,7 +68,7 @@ fn background_image_sprite_sheet_bundle(
 
         let crop_rect = Rect { min, max };
 
-        let index = texture_atlas_layout.add_texture(crop_rect);
+        let index = texture_atlas_layout.add_texture(crop_rect.as_urect());
 
         let scale = background_position.scale;
 
